@@ -4,7 +4,7 @@ export VERSION=$1
 SOURCE_DIR=$2
 QT_BINS=$3
 
-make clean -j1
+make -j6
 OSM_DESKTOP=OpenSoundMeter_$VERSION.desktop
 LINUXDEPLOYQT=linuxdeployqt-6-x86_64.AppImage
 
