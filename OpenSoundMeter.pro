@@ -70,6 +70,8 @@ SOURCES += src/main.cpp \
     src/remote/items/storeditem.cpp \
     src/remote/network.cpp \
     src/remote/remoteclient.cpp \
+    src/remote/restapi.cpp \
+    src/remote/httpserver.cpp \
     src/remote/server.cpp \
     src/remote/tcpreciever.cpp \
     src/source/group.cpp \
@@ -215,6 +217,8 @@ HEADERS += \
     src/remote/network.h \
     src/remote/remoteclient.h \
     src/remote/server.h \
+    src/remote/restapi.h \
+    src/remote/httpserver.h \
     src/remote/tcpreciever.h \
     src/source/group.h \
     src/source/source_abstract.h \

@@ -24,6 +24,8 @@
 #include "common/settings.h"
 #include "common/logger.h"
 #include "common/notifier.h"
+#include "httpserver.h"
+#include "restapi.h"
 #include "src/generator/generator.h"
 #include "src/targettrace.h"
 #include "src/union.h"
@@ -96,6 +98,9 @@ int main(int argc, char *argv[])
     auto server = remote::Server(generator, &sourceList);
     server.setSourceList(&sourceList);
 
+    auto restApi = remote::RestApi(&sourceList);
+    restApi.setSourceList(&sourceList);
+
     qmlRegisterType<audio::DeviceModel>("Audio", 1, 0, "DeviceModel");
     qmlRegisterType<Chart::VariableChart>("OpenSoundMeter", 1, 0, "VariableChart");
     qmlRegisterUncreatableMetaObject(Filter::staticMetaObject, "Measurement", 1, 0, "FilterFrequency",
@@ -134,6 +139,7 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("remoteServer", &server);
     engine.rootContext()->setContextProperty("remoteClient", &client);
+    engine.rootContext()->setContextProperty("restApi", &restApi);
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 
     if (engine.rootObjects().isEmpty())

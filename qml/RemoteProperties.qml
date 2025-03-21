@@ -88,6 +88,39 @@ Item {
                 Material.background: parent.Material.background
                 onClicked: remoteClient.reset()
             }
+
+            Button {
+                checkable: true
+                text: qsTr("Rest Api")
+                Material.background: parent.Material.background
+                checked: restApi.active
+                onCheckedChanged: {
+                    restApi.active = checked
+                }
+            }
+            TextField {
+                id: portField
+                placeholderText: restApi.port
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("rest api port")
+                Layout.preferredWidth: 50
+                enabled: !restApi.active
+
+                selectByMouse: true
+                onTextChanged: restApi.port = portField.text
+                onFocusChanged: {
+                    if (focus) {
+                        selectAll()
+                    }
+                }
+                onEditingFinished: {
+                    focus = false
+
+                }
+                Keys.onEscapePressed: {
+                    focus = false
+                }
+            }
         }
     }
 }
