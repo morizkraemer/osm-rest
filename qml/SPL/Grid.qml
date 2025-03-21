@@ -24,11 +24,13 @@ import OpenSoundMeterModule 1.0
 
 Item {
     id: control
-    property alias settings: model.settings
+    property var model: meterTableModel
+    property var settings: model.settings
     anchors.fill: parent
 
     TableView{
         id: view
+        model: meterTableModel
         anchors.fill: parent
         columnSpacing: 2
         rowSpacing: 2
@@ -41,13 +43,11 @@ Item {
         columnWidthProvider : function() {return control.width > 0 ? cellWidth : 1; }
         rowHeightProvider : function() { return control.height > 0 ? cellHeight : 1; }
 
-        model: MeterTableModel {
-            id: model
-        }
         Component.onCompleted: {
-            model.sourceList = sourceList;
             model.settings = control.settings;
+            model.sourceList = sourceList;
         }
+
         delegate: SPL.Meter {
             gridRef: view
             dataSource: model.meter
