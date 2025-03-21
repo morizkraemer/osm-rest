@@ -16,8 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "meterplot.h"
+#include "math/meter.h"
+#include "qglobal.h"
 #include "sourcelist.h"
 #include "measurement.h"//TODO: meta::measurement
+#include <regex>
 
 namespace Chart {
 
@@ -34,7 +37,7 @@ const std::map<MeterPlot::Type, QString> MeterPlot::m_typesMap = {
 
 MeterPlot::MeterPlot(QObject *parent) : QObject(parent), LevelObject(),
     m_source(nullptr), m_sourceList(nullptr), m_settings(nullptr), m_timer(this), m_type(RMS), m_threshold(0),
-    m_peakHold(false)
+    m_peakHold(false), m_exposed(false)
 {
     m_timer.setInterval(1000);
     connect(this, &MeterPlot::curveChanged, this, &MeterPlot::updateThreshold);
@@ -47,6 +50,9 @@ MeterPlot::MeterPlot(QObject *parent) : QObject(parent), LevelObject(),
 
     connect(this, &MeterPlot::sourceChanged, this, &MeterPlot::sourceNameChanged);
     connect(this, &MeterPlot::typeChanged, this, &MeterPlot::sourceNameChanged);
+
+    connect(this, &MeterPlot::titleChanged, this, &MeterPlot::identifierChanged);
+    connect(this, &MeterPlot::sourceNameChanged, this, &MeterPlot::identifierChanged);
 
     reset();
     updateThreshold();
@@ -89,6 +95,11 @@ QString MeterPlot::title() const
     default:
         return typeName() + " " + modeName() + " " + curveName() + " " + timeName();
     }
+}
+
+QString MeterPlot::identifier() const 
+{
+    return m_identifier;
 }
 
 QString MeterPlot::value() const
@@ -191,6 +202,26 @@ void MeterPlot::setPeakHold(bool newPeakHold)
     emit titleChanged();
 }
 
+bool MeterPlot::exposed() const
+{
+    return m_exposed;
+}
+
+void MeterPlot::setExposed(bool newExposed)
+{
+    m_exposed = newExposed;
+    qDebug() << identifier() + " exposed";
+    emit exposedChanged();
+}
+
+void MeterPlot::setIdentifier(const QString& newIdentifier) {
+    if (newIdentifier.trimmed().isEmpty()) {
+        m_identifier = sourceName() + ": " + title();
+    } else {
+        m_identifier = newIdentifier;
+    }
+}
+
 void MeterPlot::reset()
 {
     m_peakLevel = -std::numeric_limits<float>::infinity();
@@ -221,6 +252,8 @@ void MeterPlot::setSettings(Settings *newSettings)
     setPause(
         m_settings->reactValue<MeterPlot, bool>("pause", this, &MeterPlot::pauseChanged, pause()).toBool()
     );
+
+    setIdentifier(sourceName() + ": " + title());
 }
 
 SourceList *MeterPlot::sourceList() const

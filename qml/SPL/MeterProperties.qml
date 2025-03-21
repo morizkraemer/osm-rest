@@ -192,6 +192,43 @@ Item {
                          dataObject.meter.type !== "Delay"
             }
 
+        Button {
+            text: "API"
+            ToolTip.visible: hovered
+            ToolTip.text: qsTr("expose in rest api")
+            checkable: true
+            onCheckedChanged: dataObject.meter.exposed = checked
+            checked: dataObject.meter.exposed
+            Material.background: parent.Material.background
+            Layout.alignment: Qt.AlignHCenter
+
+        }
+        TextField {
+            id: propertyNameField
+            placeholderText: dataObject ? dataObject.meter.identifier : "identifier"
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: wideWidth
+            ToolTip.visible: hovered
+            ToolTip.text: qsTr("rest api identifier")
+            enabled: !dataObject.meter.exposed
+
+            selectByMouse: true
+            onTextChanged: dataObject.meter.identifier = propertyNameField.text
+            onFocusChanged: {
+                if (focus) {
+                    selectAll()
+                }
+            }
+            onEditingFinished: {
+                focus = false
+
+            }
+            Keys.onEscapePressed: {
+                focus = false
+            }
+        }
+
+
         }
     }
 }

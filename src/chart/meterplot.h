@@ -20,6 +20,8 @@
 
 #include <QTimer>
 #include "levelobject.h"
+#include "qchar.h"
+#include "qobjectdefs.h"
 #include "source/source_abstract.h"
 #include "math/leq.h"
 #include "common/settings.h"
@@ -57,11 +59,14 @@ public:
     Q_PROPERTY(QString modeName READ modeName NOTIFY modeChanged)
 
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
+    Q_PROPERTY(QString identifier READ identifier WRITE setIdentifier NOTIFY identifierChanged)
+
     Q_PROPERTY(QString value READ value NOTIFY valueChanged)
     Q_PROPERTY(QString sourceName READ sourceName NOTIFY sourceNameChanged)
     Q_PROPERTY(float threshold READ threshold WRITE setThreshold NOTIFY thresholdChanged)
     Q_PROPERTY(bool pause READ pause WRITE setPause NOTIFY pauseChanged)
     Q_PROPERTY(bool peakHold READ peakHold WRITE setPeakHold NOTIFY peakHoldChanged)
+    Q_PROPERTY(bool exposed READ exposed WRITE setExposed  NOTIFY exposedChanged)
 
 public:
     MeterPlot(QObject *parent = nullptr);
@@ -72,6 +77,12 @@ public:
     QString title() const;
     QString value() const;
     QString sourceName() const;
+
+    QString identifier() const;
+    void setIdentifier(const QString& newIdentifier);
+
+    bool exposed() const;
+    void setExposed(bool newExposed);
 
     float threshold() const;
     void setThreshold(float threshold);
@@ -113,6 +124,10 @@ signals:
 
     void peakHoldChanged();
 
+    void identifierChanged();
+
+    void exposedChanged();
+
 private slots:
     void updateThreshold();
     void resetSource();
@@ -131,9 +146,11 @@ private:
     QTimer m_timer;
     Type m_type;
     math::Leq m_leq;
+    QString m_identifier;
     QMetaObject::Connection m_sourceConnection;
     float m_threshold;
     bool m_peakHold;
+    bool m_exposed;
     mutable float m_peakLevel;
 
     static const std::map<Type, QString> m_typesMap;
