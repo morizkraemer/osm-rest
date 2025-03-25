@@ -194,13 +194,17 @@ Item {
 
         Button {
             text: "API"
+            Layout.alignment: Qt.AlignHCenter
             ToolTip.visible: hovered
             ToolTip.text: qsTr("expose in rest api")
             checkable: true
-            onCheckedChanged: dataObject.meter.exposed = checked
             checked: dataObject.meter.exposed
+            onToggled: {
+                if (checked !== meter.exposed) {
+                   meter.exposed = checked
+                }
+            }
             Material.background: parent.Material.background
-            Layout.alignment: Qt.AlignHCenter
 
         }
         TextField {
@@ -221,7 +225,6 @@ Item {
             }
             onEditingFinished: {
                 focus = false
-
             }
             Keys.onEscapePressed: {
                 focus = false

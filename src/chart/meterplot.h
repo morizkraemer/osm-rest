@@ -79,7 +79,9 @@ public:
     QString sourceName() const;
 
     QString identifier() const;
-    void setIdentifier(const QString& newIdentifier);
+    void setIdentifier(const QString newIdentifier);
+    bool customIdentifier() const;
+    void setCustomIdentifier(bool newC) { m_customIdentifier = newC; };
 
     bool exposed() const;
     void setExposed(bool newExposed);
@@ -124,9 +126,9 @@ signals:
 
     void peakHoldChanged();
 
-    void identifierChanged();
+    void identifierChanged(QString);
 
-    void exposedChanged();
+    void exposedChanged(bool);
 
 private slots:
     void updateThreshold();
@@ -147,6 +149,7 @@ private:
     Type m_type;
     math::Leq m_leq;
     QString m_identifier;
+    bool m_customIdentifier;
     QMetaObject::Connection m_sourceConnection;
     float m_threshold;
     bool m_peakHold;

@@ -20,7 +20,6 @@
 #include "qglobal.h"
 #include "sourcelist.h"
 #include "measurement.h"//TODO: meta::measurement
-#include <regex>
 
 namespace Chart {
 
@@ -51,8 +50,12 @@ MeterPlot::MeterPlot(QObject *parent) : QObject(parent), LevelObject(),
     connect(this, &MeterPlot::sourceChanged, this, &MeterPlot::sourceNameChanged);
     connect(this, &MeterPlot::typeChanged, this, &MeterPlot::sourceNameChanged);
 
-    connect(this, &MeterPlot::titleChanged, this, &MeterPlot::identifierChanged);
-    connect(this, &MeterPlot::sourceNameChanged, this, &MeterPlot::identifierChanged);
+    connect(this, &MeterPlot::titleChanged, this, [this]() {
+        emit identifierChanged(m_identifier);
+    });
+    connect(this, &MeterPlot::sourceNameChanged, this, [this]() {
+        emit identifierChanged(m_identifier);
+    });
 
     reset();
     updateThreshold();
@@ -97,9 +100,20 @@ QString MeterPlot::title() const
     }
 }
 
-QString MeterPlot::identifier() const 
+QString MeterPlot::identifier() const
 {
-    return m_identifier;
+    if (m_customIdentifier) return m_identifier;
+    else return sourceName() + ": " + title();
+}
+
+void MeterPlot::setIdentifier(const QString newIdentifier) {
+    if (newIdentifier.trimmed().isEmpty()) {
+        setCustomIdentifier(false);
+    } else {
+        m_identifier = newIdentifier;
+        setCustomIdentifier(true);
+    }
+    emit identifierChanged(newIdentifier);
 }
 
 QString MeterPlot::value() const
@@ -210,17 +224,10 @@ bool MeterPlot::exposed() const
 void MeterPlot::setExposed(bool newExposed)
 {
     m_exposed = newExposed;
-    qDebug() << identifier() + " exposed";
-    emit exposedChanged();
+    qDebug() << (newExposed ? identifier() + " exposed" : identifier() + " not exposed");
+    emit exposedChanged(newExposed);
 }
 
-void MeterPlot::setIdentifier(const QString& newIdentifier) {
-    if (newIdentifier.trimmed().isEmpty()) {
-        m_identifier = sourceName() + ": " + title();
-    } else {
-        m_identifier = newIdentifier;
-    }
-}
 
 void MeterPlot::reset()
 {
@@ -252,8 +259,12 @@ void MeterPlot::setSettings(Settings *newSettings)
     setPause(
         m_settings->reactValue<MeterPlot, bool>("pause", this, &MeterPlot::pauseChanged, pause()).toBool()
     );
-
-    setIdentifier(sourceName() + ": " + title());
+    setIdentifier(
+        m_settings->reactValue<MeterPlot, QString>("identifier", this, &MeterPlot::identifierChanged, identifier()).toString()
+    ); // TODO: make this default back to Source: Title when nothing is supplied, make the textfield not have the text as the placeholder, if its not Source: Title
+    setExposed(
+        m_settings->reactValue<MeterPlot, bool>("exposed", this, &MeterPlot::exposedChanged, exposed()).toBool()
+    );
 }
 
 SourceList *MeterPlot::sourceList() const
