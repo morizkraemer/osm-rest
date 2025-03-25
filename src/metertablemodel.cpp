@@ -16,7 +16,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include "metertablemodel.h"
+#include "meterplot.h"
+#include "qvector.h"
 #include "sourcelist.h"
+#include <memory>
 
 MeterTableModel::MeterTableModel(QObject *parent) : QAbstractTableModel(parent),
     m_sourceList(nullptr), m_settings(nullptr)
@@ -84,6 +87,20 @@ void MeterTableModel::setSettings(Settings *newSettings)
 SourceList *MeterTableModel::sourceList() const
 {
     return m_sourceList;
+}
+
+
+QVector<std::shared_ptr<Chart::MeterPlot>> MeterTableModel::getExposedMeters() {
+    QVector<std::shared_ptr<Chart::MeterPlot>> exposedMeters;
+    for (auto &row : m_data) {
+        for (auto &cell : row) {
+            if (cell->exposed()) exposedMeters.append(cell);
+        }
+    }
+
+    return exposedMeters;
+
+
 }
 
 void MeterTableModel::setSourceList(SourceList *newSourceList)

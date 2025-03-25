@@ -17,8 +17,12 @@ namespace  remote {
 
 RestApi::RestApi(SourceList* sourceList, QObject* parent)
     : QObject(parent), m_httpServer(new HttpServer(m_port)), m_httpThread(), m_sourceList(sourceList)
+RestApi::RestApi(Settings *settings, SourceList* sourceList, MeterTableModel *meterTable, QObject* parent)
+    : QObject(parent), m_httpServer(new HttpServer(m_port)), m_httpThread(), m_sourceList(sourceList), m_meterTable(meterTable), m_settings(settings)
 {
     setupRoutes();
+    setSettings(m_settings);
+
 }
 
 RestApi::~RestApi() {
@@ -56,6 +60,22 @@ void RestApi::setSourceList(SourceList* list) {
 void RestApi::setPort(quint16 newPort){
     m_port = newPort;
     m_httpServer->setPort(newPort);
+    emit portChanged(newPort);
+}
+
+void RestApi::setSettings(Settings *newSettings)
+{
+    if (!m_settings) {
+        m_settings = newSettings;
+    }
+
+    setPort(
+        m_settings->reactValue<RestApi, quint16>("port", this, &RestApi::portChanged, port()).toInt()
+    );
+}
+
+Settings* RestApi::settings() {
+    return m_settings;
 }
 
 void RestApi::setupRoutes() {
@@ -73,6 +93,13 @@ void RestApi::setupRoutes() {
         return m_httpServer->buildJsonResponse(200, object);
     });
 
+    m_httpServer->registerRoute("GET", "api/meters", [this](const QJsonObject& req) -> QByteArray {
+        QJsonObject object;
+        for (auto &meter : m_meterTable->getExposedMeters()) {
+            object[meter->identifier()] = meter->value();
+        }
+        return m_httpServer->buildJsonResponse(200, object);
+    });
     m_httpServer->registerRoute("GET", "/api/source/{id}", [this](const QJsonObject& req) -> QByteArray {
         QString sourceUUID = req["params"]["id"].toString();
         QJsonObject response;
@@ -149,4 +176,7 @@ void RestApi::setupRoutes() {
         return m_httpServer->buildJsonResponse(200, response);
     });
 };
+
+
+
 } //namespace remote

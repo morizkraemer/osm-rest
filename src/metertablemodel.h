@@ -20,9 +20,11 @@
 
 #include <QAbstractListModel>
 #include <QtQml>
+#include <memory>
 
 #include "common/settings.h"
 #include "meterplot.h"
+#include "qvector.h"
 
 class MeterTableModel : public QAbstractTableModel
 {
@@ -45,6 +47,8 @@ public:
     };
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
+
+    QVector<std::shared_ptr<Chart::MeterPlot>> getExposedMeters();
 
     int columns() const;
     void setColumns(int newColumns);

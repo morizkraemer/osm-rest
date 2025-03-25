@@ -26,6 +26,7 @@
 #include "common/notifier.h"
 #include "httpserver.h"
 #include "metertablemodel.h"
+#include "qglobal.h"
 #include "restapi.h"
 #include "src/generator/generator.h"
 #include "src/targettrace.h"
@@ -95,7 +96,7 @@ int main(int argc, char *argv[])
     auto notifier = Notifier::getInstance();
 
 
-    auto *meterTableModel = new MeterTableModel();
+    MeterTableModel meterTableModel;
 
     auto client = remote::Client(settings.getGroup("apiClient"));
     client.setSourceList(&sourceList);
@@ -103,7 +104,7 @@ int main(int argc, char *argv[])
     auto server = remote::Server(generator, &sourceList);
     server.setSourceList(&sourceList);
 
-    auto restApi = remote::RestApi(&sourceList);
+    auto restApi = remote::RestApi(settings.getGroup("restApi"), &sourceList, &meterTableModel);
     restApi.setSourceList(&sourceList);
 
 
@@ -147,7 +148,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("remoteClient", &client);
     engine.rootContext()->setContextProperty("restApi", &restApi);
 
-    engine.rootContext()->setContextProperty("meterTableModel", meterTableModel);
+    engine.rootContext()->setContextProperty("meterTableModel", &meterTableModel);
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 

@@ -102,22 +102,39 @@ Item {
                 id: portField
                 placeholderText: restApi.port
                 ToolTip.visible: hovered
-                ToolTip.text: qsTr("rest api port")
+                ToolTip.text: qsTr("rest api port 1 - 65535")
                 Layout.preferredWidth: 50
                 enabled: !restApi.active
+                inputMethodHints: Qt.ImhDigitsOnly
+                validator: IntValidator {}
 
                 selectByMouse: true
-                onTextChanged: restApi.port = portField.text
+
                 onFocusChanged: {
                     if (focus) {
                         selectAll()
+                    } else {
+                        let val = parseInt(text);
+                        if (isNaN(val) || val < 0 || val > 65535) {
+                            restApi.port = 49008
+                            text = ""
+                            placeholderText: 49008
+                        } else {
+                            restApi.port = val
+                        }
                     }
                 }
-                onEditingFinished: {
-                    focus = false
 
+                onTextChanged: {
+                    if (text.trim().length === 0) {
+                        placeholderText: 49008
+                    }
                 }
+
                 Keys.onEscapePressed: {
+                    focus = false
+                }
+                Keys.onReturnPressed: {
                     focus = false
                 }
             }
