@@ -224,7 +224,6 @@ bool MeterPlot::exposed() const
 void MeterPlot::setExposed(bool newExposed)
 {
     m_exposed = newExposed;
-    qDebug() << (newExposed ? identifier() + " exposed" : identifier() + " not exposed");
     emit exposedChanged(newExposed);
 }
 
@@ -261,7 +260,7 @@ void MeterPlot::setSettings(Settings *newSettings)
     );
     setIdentifier(
         m_settings->reactValue<MeterPlot, QString>("identifier", this, &MeterPlot::identifierChanged, identifier()).toString()
-    ); // TODO: make this default back to Source: Title when nothing is supplied, make the textfield not have the text as the placeholder, if its not Source: Title
+    );
     setExposed(
         m_settings->reactValue<MeterPlot, bool>("exposed", this, &MeterPlot::exposedChanged, exposed()).toBool()
     );
