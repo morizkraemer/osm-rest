@@ -258,6 +258,9 @@ void MeterPlot::setSettings(Settings *newSettings)
     setPause(
         m_settings->reactValue<MeterPlot, bool>("pause", this, &MeterPlot::pauseChanged, pause()).toBool()
     );
+    m_leq.setTime(
+        m_settings->reactValue<MeterPlot, QString>("time", this, &MeterPlot::timeChanged, time()).toString()
+    );
     setIdentifier(
         m_settings->reactValue<MeterPlot, QString>("identifier", this, &MeterPlot::identifierChanged, identifier()).toString()
     );
