@@ -31,6 +31,7 @@ public:
     QByteArray handleHttpRequest(const QString &requestString);
     QByteArray buildHttpResponse(int statusCode, const QString &contentType, const QByteArray &body);
     QByteArray buildJsonResponse(int statusCode, const QJsonObject &json);
+    QByteArray buildErrorResponse(int statusCode, const QString &errorMessage);
     QByteArray buildStatusResponse(int statusCode);
 
     quint16 port() const;

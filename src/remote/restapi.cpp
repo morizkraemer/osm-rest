@@ -1,11 +1,16 @@
 #include "restapi.h"
+#include "httpclient.h"
 #include "httpserver.h"
+#include "meterplot.h"
+#include "metertablemodel.h"
 #include "qglobal.h"
+#include "qjsondocument.h"
 #include "qjsonobject.h"
 #include "qmetaobject.h"
 #include "qnamespace.h"
 #include "qobject.h"
 #include "qthread.h"
+#include "qurl.h"
 #include "quuid.h"
 #include "sourcelist.h"
 #include <QDebug>
@@ -15,14 +20,12 @@
 
 namespace  remote {
 
-RestApi::RestApi(SourceList* sourceList, QObject* parent)
-    : QObject(parent), m_httpServer(new HttpServer(m_port)), m_httpThread(), m_sourceList(sourceList)
 RestApi::RestApi(Settings *settings, SourceList* sourceList, MeterTableModel *meterTable, QObject* parent)
-    : QObject(parent), m_httpServer(new HttpServer(m_port)), m_httpThread(), m_sourceList(sourceList), m_meterTable(meterTable), m_settings(settings)
+    : QObject(parent), m_httpServer(new HttpServer(m_port)), m_httpThread(), m_sourceList(sourceList),  m_meterTable(meterTable), m_settings(settings), m_httpClient()
 {
     setupRoutes();
     setSettings(m_settings);
-
+    if (startup()) setActive(true);
 }
 
 RestApi::~RestApi() {
@@ -36,6 +39,7 @@ void RestApi::setActive(bool newActive) {
 
     if (newActive) {
         m_httpServer->moveToThread(&m_httpThread);
+        m_httpClient.moveToThread(&m_httpThread);
 
         m_httpThread.start();
 
@@ -50,6 +54,11 @@ void RestApi::setActive(bool newActive) {
 
     m_active = newActive;
     emit activeChanged();
+}
+
+void RestApi::setStartup(bool newStartup) {
+    m_startup = newStartup;
+    emit startupChanged(newStartup);
 }
 
 
@@ -72,11 +81,51 @@ void RestApi::setSettings(Settings *newSettings)
     setPort(
         m_settings->reactValue<RestApi, quint16>("port", this, &RestApi::portChanged, port()).toInt()
     );
+
+    setStartup(
+        m_settings->reactValue<RestApi, bool>("startup", this, &RestApi::startupChanged, startup()).toBool()
+    );
 }
 
 Settings* RestApi::settings() {
     return m_settings;
 }
+
+void RestApi::exposeMeters() {
+    if (!m_subscribedUrl.isValid()) return;
+
+for (auto &meter : m_meterTable->getExposedMeters()) {
+
+    connect(meter.get(), &Chart::MeterPlot::valueChanged, this, [=]() {
+        QJsonObject obj;
+        obj["value"] = meter->value();
+        obj["unit"] = meter->modeName();
+        obj["type"] = meter->typeName();
+        obj["time"] = meter->timeName();
+        obj["curve"] = meter->curveName();
+        obj["source"] = meter->sourceName();
+        m_latestMeterValues[meter->identifier()] = obj;
+
+        // send at the fastest update interval
+        if (!m_sendPending) {
+            m_sendPending = true;
+            QTimer::singleShot(0, this, [=]() {
+                QJsonObject root;
+                QJsonObject  data;
+
+                for (auto it = m_latestMeterValues.begin(); it != m_latestMeterValues.end(); ++it) {
+                    data[it.key()] = it.value();
+                }
+                root["data"] = data;
+                m_httpClient.sendPostRequest(m_subscribedUrl, root);
+                m_sendPending = false;
+            });
+        }
+    });
+}
+}
+
+
 
 void RestApi::setupRoutes() {
     m_httpServer->registerRoute("GET", "/api/status", [this](const QJsonObject& req) -> QByteArray {
@@ -100,6 +149,41 @@ void RestApi::setupRoutes() {
         }
         return m_httpServer->buildJsonResponse(200, object);
     });
+
+    m_httpServer->registerRoute("GET", "/", [this](const QJsonObject&) -> QByteArray {
+        QFile file("../../docs/api.html");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+            return m_httpServer->buildHttpResponse(404, "text/plain", "File not found");
+
+        QByteArray htmlContent = file.readAll();
+        return m_httpServer->buildHttpResponse(200, "text/html", htmlContent);
+    });
+
+    m_httpServer->registerRoute("POST", "/api/meters/subscribe", [this](const QJsonObject& req) -> QByteArray {
+
+        QJsonParseError err;
+        QJsonObject bodyObj = QJsonDocument::fromJson(req["body"].toString().toUtf8(), &err).object();
+
+        if (err.error != QJsonParseError::NoError) {
+            m_httpServer->buildErrorResponse(400, "Invalid Json");
+        }
+
+        if (!bodyObj.contains("url")) {
+            return m_httpServer->buildErrorResponse(400, "need to specify url");
+        }
+
+        QUrl url(bodyObj["url"].toString(), QUrl::StrictMode);
+
+        if (url.isValid() && !url.isRelative()) {
+            m_subscribedUrl = url;
+            exposeMeters();
+            return m_httpServer->buildStatusResponse(200);
+        } else {
+            return m_httpServer->buildErrorResponse(400, "invalid url specified: " + url.toString());
+        }
+    });
+
+
     m_httpServer->registerRoute("GET", "/api/source/{id}", [this](const QJsonObject& req) -> QByteArray {
         QString sourceUUID = req["params"]["id"].toString();
         QJsonObject response;
@@ -169,11 +253,11 @@ void RestApi::setupRoutes() {
     });
 
 
+
     // TEST ROUTE
-    m_httpServer->registerRoute("GET", "/api/test/{test}", [this](const QJsonObject &req) -> QByteArray {
-        QJsonObject response;
-        response["test"] = req["params"]["test"];
-        return m_httpServer->buildJsonResponse(200, response);
+    m_httpServer->registerRoute("GET", "/api/test", [this](const QJsonObject &req) -> QByteArray {
+        m_httpClient.sendGetRequest(QUrl("http://localhost:8089/api"));
+        return m_httpServer->buildStatusResponse(200);
     });
 };
 

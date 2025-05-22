@@ -138,6 +138,26 @@ Item {
                     focus = false
                 }
             }
+
+            CheckBox {
+                text: qsTr("enable api on startup")
+                checked: restApi.startup
+                onToggled: {
+                    if (checked !==  restApi.startup) {
+                        restApi.startup = checked
+                    }
+                }
+            }
+
+            CheckBox {
+                text: qsTr("enable server on startup")
+                checked: remoteServer.startup
+                onToggled: {
+                    if (checked !== remoteServer.startup) {
+                        remoteServer.startup = checked
+                    }
+                }
+            }
         }
     }
 }

@@ -72,6 +72,7 @@ SOURCES += src/main.cpp \
     src/remote/remoteclient.cpp \
     src/remote/restapi.cpp \
     src/remote/httpserver.cpp \
+    src/remote/httpclient.cpp \
     src/remote/server.cpp \
     src/remote/tcpreciever.cpp \
     src/source/group.cpp \
@@ -219,6 +220,7 @@ HEADERS += \
     src/remote/server.h \
     src/remote/restapi.h \
     src/remote/httpserver.h \
+    src/remote/httpclient.h \
     src/remote/tcpreciever.h \
     src/source/group.h \
     src/source/source_abstract.h \

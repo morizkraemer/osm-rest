@@ -34,6 +34,7 @@ public:
     static QVariant availableTimes();
     QString timeName() const;
     void setTime(const QString &time);
+    void reset();
 
     float value() const;
 

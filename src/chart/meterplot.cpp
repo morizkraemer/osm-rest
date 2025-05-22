@@ -17,6 +17,7 @@
  */
 #include "meterplot.h"
 #include "math/meter.h"
+#include "qchar.h"
 #include "qglobal.h"
 #include "sourcelist.h"
 #include "measurement.h"//TODO: meta::measurement
@@ -102,8 +103,8 @@ QString MeterPlot::title() const
 
 QString MeterPlot::identifier() const
 {
-    if (m_customIdentifier) return m_identifier;
-    else return sourceName() + ": " + title();
+    if (m_customIdentifier) return QString(m_identifier).replace(" ", "_");
+    else return QString(sourceName()).replace(" ", "_") + "_" + QString(title()).replace(QRegularExpression(" +"), "_");
 }
 
 void MeterPlot::setIdentifier(const QString newIdentifier) {
@@ -113,6 +114,7 @@ void MeterPlot::setIdentifier(const QString newIdentifier) {
         m_identifier = newIdentifier;
         setCustomIdentifier(true);
     }
+    emit customIdentifierChanged();
     emit identifierChanged(newIdentifier);
 }
 
@@ -258,9 +260,15 @@ void MeterPlot::setSettings(Settings *newSettings)
     setPause(
         m_settings->reactValue<MeterPlot, bool>("pause", this, &MeterPlot::pauseChanged, pause()).toBool()
     );
-    m_leq.setTime(
-        m_settings->reactValue<MeterPlot, QString>("time", this, &MeterPlot::timeChanged, time()).toString()
-    );
+    if (typeName() == "Leq") {
+        m_leq.setTime(
+            m_settings->reactValue<MeterPlot, QString>("leqtime", this, &MeterPlot::timeChanged, time()).toString()
+        );
+    } else {
+        setTime(
+            m_settings->reactValue<MeterPlot, QString>("time", this, &MeterPlot::timeChanged, time()).toString()
+        );
+    };
     setIdentifier(
         m_settings->reactValue<MeterPlot, QString>("identifier", this, &MeterPlot::identifierChanged, identifier()).toString()
     );
@@ -342,6 +350,10 @@ void MeterPlot::setTime(const QString &time)
         LevelObject::setTime(time);
         break;
     }
+}
+
+void MeterPlot::resetLeq() {
+    if (m_type == Leq) m_leq.reset();
 }
 
 void MeterPlot::updateThreshold()

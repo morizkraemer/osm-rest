@@ -20,6 +20,8 @@
 
 #include <QObject>
 #include "network.h"
+#include "qobjectdefs.h"
+#include "settings.h"
 #include "source/source_shared.h"
 #include "source/group.h"
 
@@ -37,10 +39,12 @@ class Server : public QObject
     Q_PROPERTY(bool active READ active WRITE setActive NOTIFY activeChanged)
     Q_PROPERTY(QString lastConnected READ lastConnected NOTIFY lastConnectedChanged)
     Q_PROPERTY(bool generatorEnable READ generatorEnable WRITE setGeneratorEnable NOTIFY generatorEnableChanged)
+    Q_PROPERTY(bool startup READ startup WRITE setStartup NOTIFY startupChanged)
+    Q_PROPERTY(Settings *settings READ settings WRITE setSettings NOTIFY settingsChanged)
     const static int TIMER_INTERVAL = 1000;
 
 public:
-    explicit Server(std::shared_ptr<Generator> generator, QObject *parent = nullptr);
+    explicit Server(Settings *settings, std::shared_ptr<Generator> generator, QObject *parent = nullptr);
     ~Server();
 
     void setSourceList(SourceList *list);
@@ -51,6 +55,12 @@ public:
     bool active() const;
     void setActive(bool state);
 
+    bool startup() const;
+    void setStartup(bool newStartup);
+
+    Settings* settings();
+    void setSettings(Settings *newSettings);
+
     QByteArray tcpCallback(const QHostAddress &&address, const QByteArray &&data);
     QString lastConnected() const;
 
@@ -60,7 +70,9 @@ public:
 signals:
     void activeChanged();
     void lastConnectedChanged();
+    void startupChanged(bool newStartup);
     void generatorEnableChanged();
+    void settingsChanged(Settings *settings);
 
 public slots:
     void sendSouceNotify();
@@ -81,9 +93,11 @@ private:
     QString m_lastConnected;
     QThread m_networkThread;
     Network m_network;
+    Settings *m_settings;
     SourceList *m_sourceList;//TODO PTR
     std::shared_ptr<Generator> m_generator;
     bool m_generatorEnable;
+    bool m_startup = false;
 };
 
 } // namespace remote

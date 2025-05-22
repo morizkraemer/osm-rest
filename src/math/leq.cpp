@@ -55,6 +55,10 @@ void Leq::setTime(const QString &time)
     }
 }
 
+void Leq::reset() {
+    m_integration.reset();
+}
+
 float Leq::value() const
 {
     return 10.f * std::log10(m_integration.value() / m_integration.size());

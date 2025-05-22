@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
     auto client = remote::Client(settings.getGroup("apiClient"));
     client.setSourceList(&sourceList);
 
-    auto server = remote::Server(generator, &sourceList);
+    auto server = remote::Server(settings.getGroup("apiServer"), generator, &sourceList);
     server.setSourceList(&sourceList);
 
     auto restApi = remote::RestApi(settings.getGroup("restApi"), &sourceList, &meterTableModel);

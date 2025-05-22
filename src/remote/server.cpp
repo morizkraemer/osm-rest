@@ -15,6 +15,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "qglobal.h"
+#include "settings.h"
 #include "sourcelist.h"
 #include "generator.h"
 #include "meta/metabase.h"
@@ -23,10 +25,13 @@
 
 namespace remote {
 
-Server::Server(std::shared_ptr<Generator> generator, QObject *parent) : QObject(parent),
-    m_uuid(QUuid::createUuid()), m_networkThread(), m_network(), m_sourceList(nullptr),
-    m_generator(generator), m_generatorEnable(false)
+Server::Server(Settings *settings, std::shared_ptr<Generator> generator, QObject *parent) : QObject(parent),
+    m_uuid(QUuid::createUuid()), m_networkThread(), m_network(), m_settings(settings),
+    m_sourceList(nullptr), m_generator(generator), m_generatorEnable(false)
 {
+
+    setSettings(m_settings);
+
     m_network.moveToThread(&m_networkThread);
     m_timer.moveToThread(&m_networkThread);
     m_networkThread.setObjectName("NetworkServer");
@@ -55,6 +60,8 @@ Server::Server(std::shared_ptr<Generator> generator, QObject *parent) : QObject(
             connect(m_generator.get(), signal, this, metaObject()->method(slotId));
         }
     }
+
+    if (m_startup) start();
 }
 
 Server::~Server()
@@ -163,6 +170,30 @@ void Server::setActive(bool state)
     if (!active() && state) {
         start();
     }
+}
+
+bool Server::startup() const {
+    return m_startup;
+}
+
+void Server::setStartup(bool newStartup) {
+    m_startup = newStartup;
+    emit startupChanged(newStartup);
+}
+
+void Server::setSettings(Settings *newSettings)
+{
+    if (!m_settings) {
+        m_settings = newSettings;
+    }
+
+    setStartup(
+        m_settings->reactValue<Server, bool>("startup", this, &Server::startupChanged, startup()).toBool()
+    );
+}
+
+Settings* Server::settings() {
+    return m_settings;
 }
 
 QString Server::lastConnected() const

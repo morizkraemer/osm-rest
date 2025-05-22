@@ -99,8 +99,6 @@ QVector<std::shared_ptr<Chart::MeterPlot>> MeterTableModel::getExposedMeters() {
     }
 
     return exposedMeters;
-
-
 }
 
 void MeterTableModel::setSourceList(SourceList *newSourceList)

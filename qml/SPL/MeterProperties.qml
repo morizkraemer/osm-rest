@@ -192,46 +192,50 @@ Item {
                          dataObject.meter.type !== "Delay"
             }
 
-        Button {
-            text: "API"
-            Layout.alignment: Qt.AlignHCenter
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("expose in rest api")
-            checkable: true
-            checked: dataObject.meter.exposed
-            onToggled: {
-                if (checked !== meter.exposed) {
-                   meter.exposed = checked
+            Button {
+                text: "API"
+                Layout.alignment: Qt.AlignHCenter
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("expose in rest api")
+                checkable: true
+                checked: dataObject.meter.exposed
+                onToggled: {
+                    if (checked !== dataObject.meter.exposed) {
+                       dataObject.meter.exposed = checked
+                    }
+                }
+                Material.background: parent.Material.background
+
+            }
+            TextField {
+                id: propertyNameField
+                placeholderText: dataObject.meter.customIdentifier ? "" : dataObject.meter.identifier
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: wideWidth
+                ToolTip.visible: hovered
+                ToolTip.text: qsTr("rest api identifier")
+                enabled: !dataObject.meter.exposed
+
+                selectByMouse: true
+                onTextChanged: dataObject.meter.identifier = propertyNameField.text
+                onFocusChanged: {
+                    if (focus) {
+                        selectAll()
+                    }
+                }
+                onEditingFinished: {
+                    focus = false
+                }
+                Keys.onEscapePressed: {
+                    focus = false
                 }
             }
-            Material.background: parent.Material.background
 
-        }
-        TextField {
-            id: propertyNameField
-            placeholderText: dataObject ? dataObject.meter.identifier : "identifier"
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: wideWidth
-            ToolTip.visible: hovered
-            ToolTip.text: qsTr("rest api identifier")
-            enabled: !dataObject.meter.exposed
-
-            selectByMouse: true
-            onTextChanged: dataObject.meter.identifier = propertyNameField.text
-            onFocusChanged: {
-                if (focus) {
-                    selectAll()
-                }
+            Button {
+                text: "reset leq"
+                enabled: dataObject.meter.type === "Leq"
+                onClicked: dataObject.meter.resetLeq()
             }
-            onEditingFinished: {
-                focus = false
-            }
-            Keys.onEscapePressed: {
-                focus = false
-            }
-        }
-
-
-        }
-    }
+        } //row
+    } //column
 }

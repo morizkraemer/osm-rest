@@ -33,7 +33,6 @@ void HttpServer::stop() {
     }
 }
 
-
 quint16 HttpServer::port() const {
     return m_port;
 }
@@ -44,7 +43,6 @@ void HttpServer::setPort(quint16& newPort) {
         emit portChanged();
     }
 }
-
 
 void HttpServer::handleNewConnection() {
     QTcpSocket *clientSocket = m_tcpServer->nextPendingConnection();
@@ -78,7 +76,6 @@ QByteArray HttpServer::buildHttpResponse(int statusCode, const QString &contentT
         response.append(body);
 
     }
-
     return response;
 }
 
@@ -90,40 +87,10 @@ QByteArray HttpServer::buildStatusResponse(int statusCode) {
     return buildHttpResponse(statusCode, "", nullptr);
 }
 
-
-bool HttpServer::isRouteMatch(const QString &registeredRoute, const QString &incomingRoute) {
-    QStringList registeredParts = registeredRoute.split("/", Qt::SkipEmptyParts);
-    QStringList incomingParts = incomingRoute.split("/", Qt::SkipEmptyParts);
-
-    if (registeredParts.size() != incomingParts.size()) {
-        return false;
-    }
-
-    for (int i = 0; i < registeredParts.size(); ++i) {
-        if (registeredParts[i].startsWith("{") && registeredParts[i].endsWith("}")) {
-            continue;
-        }
-        if (registeredParts[i] != incomingParts[i]) {
-            return false;
-        }
-    }
-    return true;
-}
-
-
-QJsonObject HttpServer::extractRouteParams(const QString &registeredRoute, const QString &incomingRoute) {
-    QJsonObject params;
-    QStringList registeredParts = registeredRoute.split("/");
-    QStringList incomingParts = incomingRoute.split("/");
-
-    for (int i = 0; i < registeredParts.size(); ++i) {
-        if (registeredParts[i].startsWith("{") && registeredParts[i].endsWith("}")) {
-            QString paramName = registeredParts[i].mid(1, registeredParts[i].length() - 2);
-            params[paramName] = incomingParts[i];
-        }
-    }
-    qDebug() << params;
-    return params;
+QByteArray HttpServer::buildErrorResponse(int statusCode, const QString &errorMessage) {
+    QJsonObject obj;
+    obj["errorMessage"] = errorMessage;
+    return buildJsonResponse(statusCode, obj);
 }
 
 QByteArray HttpServer::handleHttpRequest(const QString &requestString) {
@@ -157,6 +124,40 @@ QByteArray HttpServer::handleHttpRequest(const QString &requestString) {
     }
 
     return buildHttpResponse(404, "text/plain", "Error: Not Found");
+}
+
+bool HttpServer::isRouteMatch(const QString &registeredRoute, const QString &incomingRoute) {
+    QStringList registeredParts = registeredRoute.split("/", Qt::SkipEmptyParts);
+    QStringList incomingParts = incomingRoute.split("/", Qt::SkipEmptyParts);
+
+    if (registeredParts.size() != incomingParts.size()) {
+        return false;
+    }
+
+    for (int i = 0; i < registeredParts.size(); ++i) {
+        if (registeredParts[i].startsWith("{") && registeredParts[i].endsWith("}")) {
+            continue;
+        }
+        if (registeredParts[i] != incomingParts[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+QJsonObject HttpServer::extractRouteParams(const QString &registeredRoute, const QString &incomingRoute) {
+    QJsonObject params;
+    QStringList registeredParts = registeredRoute.split("/");
+    QStringList incomingParts = incomingRoute.split("/");
+
+    for (int i = 0; i < registeredParts.size(); ++i) {
+        if (registeredParts[i].startsWith("{") && registeredParts[i].endsWith("}")) {
+            QString paramName = registeredParts[i].mid(1, registeredParts[i].length() - 2);
+            params[paramName] = incomingParts[i];
+        }
+    }
+    qDebug() << params;
+    return params;
 }
 
 QJsonObject HttpServer::parseRequest(const QString &requestString) {

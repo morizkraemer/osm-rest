@@ -60,6 +60,7 @@ public:
 
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(QString identifier READ identifier WRITE setIdentifier NOTIFY identifierChanged)
+    Q_PROPERTY(bool customIdentifier READ customIdentifier WRITE setCustomIdentifier NOTIFY customIdentifierChanged)
 
     Q_PROPERTY(QString value READ value NOTIFY valueChanged)
     Q_PROPERTY(QString sourceName READ sourceName NOTIFY sourceNameChanged)
@@ -80,7 +81,7 @@ public:
 
     QString identifier() const;
     void setIdentifier(const QString newIdentifier);
-    bool customIdentifier() const;
+    bool customIdentifier() const { return m_customIdentifier; };
     void setCustomIdentifier(bool newC) { m_customIdentifier = newC; };
 
     bool exposed() const;
@@ -107,6 +108,7 @@ public:
     bool peakHold() const;
     void setPeakHold(bool newPeakHold);
     Q_INVOKABLE void reset();
+    Q_INVOKABLE void resetLeq();
 
 signals:
     void curveChanged(QString) override;
@@ -127,6 +129,7 @@ signals:
     void peakHoldChanged();
 
     void identifierChanged(QString);
+    void customIdentifierChanged();
 
     void exposedChanged(bool);
 
@@ -148,8 +151,9 @@ private:
     QTimer m_timer;
     Type m_type;
     math::Leq m_leq;
+    QString m_leqTime;
     QString m_identifier;
-    bool m_customIdentifier;
+    bool m_customIdentifier = false;
     QMetaObject::Connection m_sourceConnection;
     float m_threshold;
     bool m_peakHold;
