@@ -94,36 +94,41 @@ Settings* RestApi::settings() {
 void RestApi::exposeMeters() {
     if (!m_subscribedUrl.isValid()) return;
 
-for (auto &meter : m_meterTable->getExposedMeters()) {
+    for (auto &meter : m_meterTable->getExposedMeters()) {
+        auto meterPtr = meter.get();
+        connect(meterPtr, &Chart::MeterPlot::valueChanged, this, [this, meterPtr]() {
+            QJsonObject obj;
+            obj["value"] = meterPtr->value();
+            obj["unit"] = meterPtr->modeName();
+            obj["type"] = meterPtr->typeName();
+            obj["time"] = meterPtr->timeName();
+            obj["curve"] = meterPtr->curveName();
+            obj["source"] = meterPtr->sourceName();
+            m_latestMeterValues[meterPtr->identifier()] = obj;
 
-    connect(meter.get(), &Chart::MeterPlot::valueChanged, this, [=]() {
-        QJsonObject obj;
-        obj["value"] = meter->value();
-        obj["unit"] = meter->modeName();
-        obj["type"] = meter->typeName();
-        obj["time"] = meter->timeName();
-        obj["curve"] = meter->curveName();
-        obj["source"] = meter->sourceName();
-        m_latestMeterValues[meter->identifier()] = obj;
+            if (!m_sendPending) {
+                m_sendPending = true;
+                QTimer::singleShot(0, this, [this]() {
+                    QJsonObject root;
+                    QJsonArray data;
 
-        // send at the fastest update interval
-        if (!m_sendPending) {
-            m_sendPending = true;
-            QTimer::singleShot(0, this, [=]() {
-                QJsonObject root;
-                QJsonObject  data;
+                    for (auto it = m_latestMeterValues.begin(); it != m_latestMeterValues.end(); ++it) {
+                        QJsonObject obj = it.value();
+                        obj["id"] = it.key();
+                        data.append(obj);
+                    }
 
-                for (auto it = m_latestMeterValues.begin(); it != m_latestMeterValues.end(); ++it) {
-                    data[it.key()] = it.value();
-                }
-                root["data"] = data;
-                m_httpClient.sendPostRequest(m_subscribedUrl, root);
-                m_sendPending = false;
-            });
-        }
-    });
+                    root["data"] = data;
+                    qDebug().noquote() << QJsonDocument(root).toJson(QJsonDocument::Indented);
+                    m_httpClient.sendPostRequest(m_subscribedUrl, root);
+                    m_sendPending = false;
+                });
+            }
+        });
+
 }
 }
+
 
 
 
