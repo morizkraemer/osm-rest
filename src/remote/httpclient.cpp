@@ -27,7 +27,7 @@ void HttpClient::sendPostRequest(const QUrl &url, const QJsonObject &json) {
             qWarning() << "POST error:" << reply->errorString();
         } else {
             QByteArray response = reply->readAll();
-            qDebug() << "POST response:" << QString(response);
+            /*qDebug() << "POST response:" << QString(response);*/
         }
         reply->deleteLater(); // ✅ clean up
     });
