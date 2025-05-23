@@ -68,6 +68,8 @@ private:
     HttpClient m_httpClient;
     QMap<QString, QJsonObject> m_latestMeterValues;
     bool m_sendPending = false;
+    int m_failedAttempts;
+    const int MAX_FAILED_ATTEMPTS = 10;
 };
 
 } //namespace remote

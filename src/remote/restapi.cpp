@@ -120,7 +120,21 @@ void RestApi::exposeMeters() {
 
                     root["data"] = data;
                     qDebug().noquote() << QJsonDocument(root).toJson(QJsonDocument::Indented);
-                    m_httpClient.sendPostRequest(m_subscribedUrl, root);
+                    m_httpClient.sendPostRequest(m_subscribedUrl, root, [this](bool success) {
+                        if (!success) {
+                            m_failedAttempts++;
+                            qDebug() << m_failedAttempts;
+
+                            if (m_failedAttempts >= MAX_FAILED_ATTEMPTS) {
+                                for (auto &meter : m_meterTable->getExposedMeters()) {
+                                    disconnect(meter.get(), nullptr, this, nullptr);
+                                }
+                                m_subscribedUrl.clear();
+                            }
+                        } else {
+                            m_failedAttempts = 0;
+                        }
+                    });
                     m_sendPending = false;
                 });
             }

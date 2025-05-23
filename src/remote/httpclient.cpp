@@ -13,7 +13,7 @@ void HttpClient::sendGetRequest(const QUrl &url) {
     m_manager.get(request);
 }
 
-void HttpClient::sendPostRequest(const QUrl &url, const QJsonObject &json) {
+void HttpClient::sendPostRequest(const QUrl &url, const QJsonObject &json, std::function<void(bool)> callback) {
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     QJsonDocument doc(json);
@@ -22,13 +22,15 @@ void HttpClient::sendPostRequest(const QUrl &url, const QJsonObject &json) {
     QNetworkReply *reply = m_manager.post(request, payload);
 
     // ✅ Handle the reply directly
-    connect(reply, &QNetworkReply::finished, reply, [reply]() {
+    connect(reply, &QNetworkReply::finished, reply, [reply, callback]() {
+        bool success = false;
         if (reply->error() != QNetworkReply::NoError) {
             qWarning() << "POST error:" << reply->errorString();
         } else {
-            QByteArray response = reply->readAll();
-            /*qDebug() << "POST response:" << QString(response);*/
+            const int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+            success = (statusCode == 200);
         }
+        callback(success);
         reply->deleteLater(); // ✅ clean up
     });
 }

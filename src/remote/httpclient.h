@@ -16,7 +16,7 @@ class HttpClient : public QObject {
 public:
     explicit HttpClient(QObject* parent = nullptr);
     void sendGetRequest(const QUrl& url);
-    void sendPostRequest(const QUrl& url, const QJsonObject& json);
+    void sendPostRequest(const QUrl& url, const QJsonObject& json, std::function<void(bool)> callback);
 
 private slots:
     void onFinished(QNetworkReply* reply);
